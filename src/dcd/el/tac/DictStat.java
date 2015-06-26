@@ -11,6 +11,7 @@ import dcd.config.ConfigUtils;
 import dcd.config.IniFile;
 import dcd.el.dict.AliasDictWithIndex;
 import dcd.el.io.IOUtils;
+import dcd.el.objects.ByteArrayString;
 
 public class DictStat {
 	public static void run(IniFile config) {
@@ -52,7 +53,7 @@ public class DictStat {
 
 				++queryCnt;
 
-				LinkedList<String> mids = dict.getMids(query.name);
+				LinkedList<ByteArrayString> mids = dict.getMids(query.name);
 				if (mids != null) {
 					candidateCnt += mids.size();
 				}
@@ -65,7 +66,7 @@ public class DictStat {
 					++inKbCnt;
 					if (mids != null) {
 						boolean hitFlg = false;
-						for (String mid : mids) {
+						for (ByteArrayString mid : mids) {
 							String eid = mapper.getEid(mid);
 							if (eid != null && eid.equals(goldVals[1])) {
 								++hitCnt;

@@ -9,6 +9,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.file.Paths;
+import java.util.Arrays;
 
 import dcd.el.ELConsts;
 import dcd.el.documents.NewsDocument;
@@ -17,6 +18,16 @@ import dcd.el.objects.ByteArrayString;
 import dcd.el.utils.TupleFileTools;
 
 public class FeatureTools {
+	public static class FeaturePos implements Comparable<FeaturePos> {
+		@Override
+		public int compareTo(FeaturePos fp) {
+			return mid.compareTo(fp.mid);
+		}
+		
+		public ByteArrayString mid = null;
+		public long filePointer = 0;
+	}
+	
 	public static void test() {		
 //		String idfFileName = "d:/data/el/features/enwiki_idf.txt";
 		String idfFileName = "d:/data/el/features/enwiki_idf.sd";
@@ -164,17 +175,18 @@ public class FeatureTools {
 		DataInputStream disTfidf = IOUtils
 				.getBufferedDataInputStream(tfidfFeatFileName);
 
-		String tmpIdxFileName = Paths.get(ELConsts.TMP_FILE_PATH, "tmp_mid_feat_idx.txt").toString();
-		BufferedWriter writer = IOUtils.getUTF8BufWriter(tmpIdxFileName,
-				false);
-		if (writer == null)
-			return;
+//		String tmpIdxFileName = Paths.get(ELConsts.TMP_FILE_PATH, "tmp_mid_feat_idx.txt").toString();
+//		BufferedWriter writer = IOUtils.getUTF8BufWriter(tmpIdxFileName,
+//				false);
+//		if (writer == null)
+//			return;
 
 		// WikiSingleIntFeature popFeature = new WikiSingleIntFeature();
 		// WikiTfIdfFeature tfidfFeature = new WikiTfIdfFeature();
 //		SingleIntFeature popFeature = new SingleIntFeature();
 		SingleFloatFeature popFeature = new SingleFloatFeature();
 		TfIdfFeature tfidfFeature = new TfIdfFeature();
+		FeaturePos[] featurePoses = new FeaturePos[wids.length]; 
 
 		try {
 			RandomAccessFile raf = new RandomAccessFile(dstFeatFileName, "rw");
@@ -190,7 +202,11 @@ public class FeatureTools {
 					break;
 				}
 				preFilePointer = curFilePointer;
-				writer.write(mids[i] + "\t" + curFilePointer + "\n");
+				
+				featurePoses[i] = new FeaturePos();
+				featurePoses[i].mid = new ByteArrayString(mids[i], ELConsts.MID_BYTE_LEN);
+				featurePoses[i].filePointer = curFilePointer;
+//				writer.write(mids[i] + "\t" + curFilePointer + "\n");
 
 				raf.writeInt(wids[i]);
 				curPopFeatWid = writeFeatureOfWid(wids[i], disPop, curPopFeatWid, popFeature, raf);
@@ -207,7 +223,7 @@ public class FeatureTools {
 
 			disPop.close();
 			disTfidf.close();
-			writer.close();
+//			writer.close();
 			raf.close();
 
 			System.out.println(wids.length + " wids");
@@ -216,10 +232,27 @@ public class FeatureTools {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		
+		Arrays.sort(featurePoses);
+		writeFeatureIndices(featurePoses, dstIdxFileName);
 
-//		PairFileSort.pairFileSort(tmpIdxFileName, 0, dstIdxFileName);
-		TupleFileTools.sort(tmpIdxFileName, dstIdxFileName, new TupleFileTools.SingleFieldComparator(0));
-		IOUtils.writeNumLinesFileFor(dstIdxFileName, numWids);
+//		TupleFileTools.sort(tmpIdxFileName, dstIdxFileName, new TupleFileTools.SingleFieldComparator(0));
+//		IOUtils.writeNumLinesFileFor(dstIdxFileName, numWids);
+	}
+	
+	private static void writeFeatureIndices(FeaturePos[] featurePoses, String dstFileName) {
+		DataOutputStream dos = IOUtils.getBufferedDataOutputStream(dstFileName);
+		try {
+			dos.writeInt(featurePoses.length);
+			for (FeaturePos fp : featurePoses) {
+				fp.mid.toFileWithFixedLen(dos, ELConsts.MID_BYTE_LEN);
+				dos.writeLong(fp.filePointer);
+			}
+			
+			dos.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 	private static void loadWidsMids(String midToWidFileName, String[] mids,

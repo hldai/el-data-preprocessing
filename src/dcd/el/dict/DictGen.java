@@ -2,14 +2,17 @@
 
 package dcd.el.dict;
 
-import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.FileOutputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
+import java.util.Collections;
+import java.util.LinkedList;
 
+import dcd.el.ELConsts;
 import dcd.el.io.ByteLineReader;
 import dcd.el.io.IOUtils;
+import dcd.el.objects.ByteArrayString;
 import dcd.el.utils.CommonUtils;
 
 public class DictGen {
@@ -28,13 +31,12 @@ public class DictGen {
 		try {
 			System.out.println("Writing alias and mid list...");
 			
-			BufferedOutputStream midBos = new BufferedOutputStream(
-					new FileOutputStream(dstMidFile));
+			DataOutputStream dos = IOUtils.getBufferedDataOutputStream(dstMidFile);
 
 			String line = null;
 			String mid = null, name = null, preName = null;
-			int begPos = 0, len = 0;
-//			byte[] byteArr = new byte[ELConsts.MID_BYTE_LEN];
+			int begPos = 0;
+			LinkedList<ByteArrayString> candidateMids = new LinkedList<ByteArrayString>();
 
 			while ((line = reader.readLine()) != null) {
 				if (line.equals("")) {
@@ -46,22 +48,26 @@ public class DictGen {
 
 				if (name.contains("\t")) {
 					System.out.println("Name has \\t in it!");
+					continue;
+				}
+				if (name.length() > ELConsts.MAX_ALIAS_LEN) {
+					continue;
 				}
 
 				if (preName != null && !name.equals(preName)) {
-					nameWriter.write(len + "\n");
+					nameWriter.write(candidateMids.size() + "\n");
+					writeMids(dos, candidateMids);
+					begPos += candidateMids.size();
+					candidateMids.clear();
 				}
 				if (preName == null || !name.equals(preName)) {
 					nameWriter.write(name + "\t" + begPos + "\t");
 					++aliasCnt;
-					len = 0;
+//					len = 0;
 				}
 
-//				CommonUtils.stringToByteArr(mid, byteArr);
-//				midBos.write(byteArr);
-				IOUtils.writeMidAsByteArr(midBos, mid);
-				++begPos;
-				++len;
+				ByteArrayString midByte = new ByteArrayString(mid, ELConsts.MID_BYTE_LEN);
+				candidateMids.add(midByte);
 
 				preName = name;
 				++cnt;
@@ -69,20 +75,28 @@ public class DictGen {
 				// if (cnt == 100) break;
 			}
 
-			nameWriter.write(len + "\n");
+			nameWriter.write(candidateMids.size() + "\n");
+			writeMids(dos, candidateMids);
 
 			System.out.println(cnt + " lines read.");
 			System.out.println(aliasCnt + " aliases written.");
 
 			reader.close();
 			nameWriter.close();
-			midBos.close();
+			dos.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 
 		int indexCnt = genAliasIndices(dstAliasFile, aliasCnt, numIndices, dstAliasIndexFile);
 		IOUtils.writeNumLinesFileFor(dstAliasIndexFile, indexCnt);
+	}
+	
+	private static void writeMids(DataOutputStream dos, LinkedList<ByteArrayString> mids) {
+		Collections.sort(mids);
+		for (ByteArrayString mid : mids) {
+			mid.toFileWithFixedLen(dos, ELConsts.MID_BYTE_LEN);
+		}
 	}
 
 	public static int genAliasIndices(String aliasFileName, int numAlias,

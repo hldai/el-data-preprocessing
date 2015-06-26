@@ -7,7 +7,7 @@ import java.util.HashMap;
 import dcd.config.IniFile;
 import dcd.el.tools.MiscTools;
 
-public class PreprocessMain {
+public class PreparationMain {
 	public static final String GZIP_DATA_PATH = "d:/data/el/LDC2015E42/data/webpages-m-00000.nt.gz";
 	public static final String FREEBASE_PATH = "d:/data/el/LDC2015E42/data";
 

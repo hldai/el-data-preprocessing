@@ -9,6 +9,7 @@ import dcd.el.dict.AliasDictWithIndex;
 import dcd.el.dict.DictGen;
 import dcd.el.io.IOUtils;
 import dcd.el.io.PairListFile;
+import dcd.el.objects.ByteArrayString;
 import dcd.el.tac.DictStat;
 import dcd.el.tools.MiscTools;
 import dcd.el.utils.TupleFileTools;
@@ -104,11 +105,11 @@ public class GenDictMain {
 		
 		long ct = System.currentTimeMillis();
 		
-		LinkedList<String> mids = dict.getMids("DHL");
+		LinkedList<ByteArrayString> mids = dict.getMids("DHL");
 		if (mids != null) {
 			int cnt = 0;
-			for (String s : mids) {
-				System.out.println(++cnt + " " + s);
+			for (ByteArrayString s : mids) {
+				System.out.println(++cnt + " " + s.toString());
 			}
 		}
 		dict.close();

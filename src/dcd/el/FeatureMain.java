@@ -41,14 +41,6 @@ public class FeatureMain {
 				.getValue("dst_file");
 		PopularityGen.genPopularityFile(wikiArticleWordCntFileName,
 				maxWordCountFileName, dstFileName);
-
-		// String midToPopFileName = sect.getValue("mid_to_pop_file"),
-		// midListFileName = sect
-		// .getValue("mid_list_file"), dstFeatFileName = sect
-		// .getValue("dst_feat_file");
-
-		// PopularityGen.genPopFeatureFileFromWikiLen(midToPopFileName,
-		// midListFileName, dstFeatFileName);
 	}
 
 	public static void genTfIdf(IniFile config) {
