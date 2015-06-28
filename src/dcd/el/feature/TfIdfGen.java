@@ -46,7 +46,7 @@ public class TfIdfGen {
 		reader.open(wikiArticleWordCntFileName, false);
 		while ((idItem = reader.readNextItem()) != null) {
 			++cnt;
-			if (cnt % 1000000 == 0)
+			if (cnt % 100000 == 0)
 				System.out.println(cnt);
 			
 			int wid = Integer.valueOf(idItem.value);
@@ -95,6 +95,7 @@ public class TfIdfGen {
 		}
 	}
 	
+	@Deprecated
 	public static void genTfIdfFile(String wikiArticleWordCntFileName, String idfFileName,
 			String dstFileName) {
 		System.out.println("Loading idf file...");
