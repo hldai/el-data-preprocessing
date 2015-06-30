@@ -2,6 +2,10 @@
 
 package dcd.el;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.LinkedList;
 
 import dcd.config.IniFile;
@@ -105,7 +109,7 @@ public class GenDictMain {
 		
 		long ct = System.currentTimeMillis();
 		
-		LinkedList<ByteArrayString> mids = dict.getMids("DHL");
+		LinkedList<ByteArrayString> mids = dict.getMids("Nicaragua");
 		if (mids != null) {
 			int cnt = 0;
 			for (ByteArrayString s : mids) {
@@ -144,6 +148,27 @@ public class GenDictMain {
 		
 		DictGen.removeDuplicates(srcFileName, dstFileName);
 	}
+	
+	public static void mergeWikiFbMidAliasCntFiles(IniFile config) {
+		IniFile.Section sect = config.getSection("dict_merge_mid_alias_cnt_files");
+		String wikiMidAliasCntFileName = sect.getValue("wiki_mid_alias_cnt_file"),
+				freebaseMidAliasFileName = sect.getValue("fb_mid_alias_file"),
+				dstMidEachAliasCntFileName = sect.getValue("dst_mid_each_alias_cnt_file"),
+				dstMidAliasCntFileName = sect.getValue("dst_mid_alias_cnt_file");
+		DictGen.mergeMidAliasCntFiles(wikiMidAliasCntFileName, freebaseMidAliasFileName, 
+				dstMidEachAliasCntFileName, dstMidAliasCntFileName);
+	}
+	
+	public static void genDictPse(IniFile config) {
+		IniFile.Section sect = config.getSection("dict_gen_dict_pse");
+		String midEachAliasCntFileName = sect.getValue("each_alias_cnt_file"),
+				midAliasCntFileName = sect.getValue("alias_cnt_file"),
+				dstAliasFile = sect.getValue("dst_alias_file"),
+				dstMidFile = sect.getValue("dst_mid_file"),
+				dstAliasIndexFile = sect.getValue("dst_alias_index_file");
+		int numIndices = sect.getIntValue("num_indices");
+		DictGen.genDictWithPse(midEachAliasCntFileName, midAliasCntFileName, dstAliasFile, dstMidFile, numIndices, dstAliasIndexFile);
+	}
 		
 	public static void test() {
 		System.out.println("DHL");
@@ -170,6 +195,9 @@ public class GenDictMain {
 			test();
 		} else if (job.equals("dict_stat")) {
 			DictStat.run(config);
-		}
+		} else if (job.equals("dict_merge_mid_alias_cnt_files"))
+			mergeWikiFbMidAliasCntFiles(config);
+		else if (job.equals("dict_gen_dict_pse"))
+			genDictPse(config);
 	}
 }

@@ -14,6 +14,9 @@ import dcd.el.io.IOUtils;
 import dcd.el.io.Item;
 import dcd.el.io.ItemReader;
 import dcd.el.utils.CommonUtils;
+import dcd.el.utils.StringTransformer;
+import dcd.el.utils.TupleFileTools;
+import dcd.el.utils.WidToMidMapper;
 
 public class MiscTools {
 	public static final String TOPIC_PREFIX = "<http://rdf.basekb.com/ns/m.";
@@ -34,6 +37,44 @@ public class MiscTools {
 	public static final char[] EN_CONTENT_SUFFIX = { '@', 'e', 'n' };
 	
 	public static final int MAX_NUM_WIKI_ID = 15500000;
+	
+	private static class WidToMidTransformer implements StringTransformer {
+		public WidToMidTransformer(int idx, WidToMidMapper widToMid) {
+			this.idx = idx;
+			this.widToMid = widToMid;
+		}
+
+		@Override
+		public String transform(String str) {
+			String[] vals = str.split("\t");
+			int wid = Integer.valueOf(vals[idx]);
+			String mid = widToMid.getMid(wid);
+			if (mid == null)
+				return null;
+			vals[idx] = mid;
+			StringBuilder stringBuilder = new StringBuilder();
+			boolean isFirst = true;
+			for (int i = 0; i < vals.length; ++i) {
+				if (isFirst)
+					isFirst = false;
+				else
+					stringBuilder.append("\t");
+				stringBuilder.append(vals[i]);
+			}
+			
+			return new String(stringBuilder);
+		}
+		
+		int idx;
+		WidToMidMapper widToMid = null;
+	}
+	
+	public static void widToMidInTupleFile(String fileName, 
+			String widToMidFileName, String dstFileName) {
+		WidToMidMapper widToMid = new WidToMidMapper(widToMidFileName);
+		WidToMidTransformer transformer = new WidToMidTransformer(0, widToMid);
+		TupleFileTools.transformLines(fileName, transformer, dstFileName);
+	}
 	
 	public static void retrieveFromFreebasePath(String path, String subStr, 
 			String fileNameFilter, String dstFileName) {

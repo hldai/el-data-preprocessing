@@ -15,7 +15,7 @@ import dcd.el.io.IOUtils;
 import dcd.el.objects.Pair;
 import dcd.el.utils.CommonUtils;
 
-// TODO obsolete
+@Deprecated
 public class PairFileSorter {
 	public static class ValuePair {
 		public String v1 = null;

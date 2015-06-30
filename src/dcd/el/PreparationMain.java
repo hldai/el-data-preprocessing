@@ -5,6 +5,7 @@ package dcd.el;
 import java.util.HashMap;
 
 import dcd.config.IniFile;
+import dcd.el.tac.MidToEidMapper;
 import dcd.el.tools.MiscTools;
 
 public class PreparationMain {
@@ -93,10 +94,7 @@ public class PreparationMain {
 	}
 	
 	public static void test() {
-		HashMap<String, Integer> m = new HashMap<String, Integer>();
-//		m.put("DHL", 4);
-		m.put("DHL", m.get("DHL") + 1);
-		System.out.println(m.get("DHL"));
+		
 	}
 
 	public static void rdfOrderCheck() {

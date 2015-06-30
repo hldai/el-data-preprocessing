@@ -34,14 +34,16 @@ public class MiscMain {
 		MiscTools.searchItem(fileName, str);
 	}
 
-	public static void swapPairFile(IniFile config) {
+	public static void swapTupleFile(IniFile config) {
 		IniFile.Section sect = config.getSection("misc_swap");
 		if (sect == null)
 			return;
 
 		String fileName = sect.getValue("file"), dstFileName = sect
 				.getValue("dst_file");
-		PairListFile.swap(fileName, dstFileName);
+		int idx0 = sect.getIntValue("idx0"), idx1 = sect.getIntValue("idx1");
+		TupleFileTools.swap(fileName, idx0, idx1, dstFileName);
+//		PairListFile.swap(fileName, dstFileName);
 	}
 
 	public static void countLinesInFile(IniFile config) {
@@ -161,6 +163,15 @@ public class MiscMain {
 				new TupleFileTools.SingleFieldComparator(sortIdx,
 						new CommonUtils.StringToIntComparator()));
 	}
+	
+	private static void widToMid(IniFile config) {
+		IniFile.Section sect = config
+				.getSection("misc_wid_to_mid");
+		String fileName = sect.getValue("file"),
+				dstFileName = sect.getValue("dst_file"),
+				widToMidFileName = sect.getValue("mid_wid_file");
+		MiscTools.widToMidInTupleFile(fileName, widToMidFileName, dstFileName);
+	}
 
 	public static void test() {
 
@@ -169,7 +180,7 @@ public class MiscMain {
 	public static void run(IniFile config) {
 		String job = config.getValue("main", "job");
 		if (job.equals("misc_swap"))
-			swapPairFile(config);
+			swapTupleFile(config);
 		else if (job.equals("misc_search_file"))
 			searchFile(config);
 		else if (job.equals("misc_search_item"))
@@ -198,5 +209,7 @@ public class MiscMain {
 			sortIntFieldTupleFile(config);
 		else if (job.equals("misc_join_int_field_tuple_file"))
 			joinIntFieldTupleFile(config);
+		else if (job.equals("misc_wid_to_mid"))
+			widToMid(config);
 	}
 }
