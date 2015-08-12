@@ -7,6 +7,14 @@ import java.io.IOException;
 
 
 public class ItemReader {
+	public ItemReader(String fileName, boolean isGZip) {
+		if (isGZip) {
+			reader = IOUtils.getGZIPBufReader(fileName);
+		} else {
+			reader = IOUtils.getUTF8BufReader(fileName);
+		}
+	}
+	
 	public void open(String fileName, boolean isGZip) {
 		if (isGZip) {
 			reader = IOUtils.getGZIPBufReader(fileName);

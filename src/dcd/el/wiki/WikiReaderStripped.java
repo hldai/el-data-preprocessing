@@ -11,7 +11,7 @@ public class WikiReaderStripped {
 	
 	public void open(String fileName, boolean isGZip, boolean hasID) {
 		this.hasID = hasID;
-		reader.open(fileName, isGZip);
+		reader = new ItemReader(fileName, isGZip);
 	}
 	
 	public void close() {
@@ -66,5 +66,5 @@ public class WikiReaderStripped {
 	private Item titleItem = null;
 	private Item textItem = null;
 	
-	private ItemReader reader = new ItemReader();
+	private ItemReader reader = null;
 }

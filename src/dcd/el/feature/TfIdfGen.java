@@ -42,8 +42,7 @@ public class TfIdfGen {
 		
 		Item idItem = null, wcItem = null;
 		int cnt = 0;
-		ItemReader reader = new ItemReader();
-		reader.open(wikiArticleWordCntFileName, false);
+		ItemReader reader = new ItemReader(wikiArticleWordCntFileName, false);
 		while ((idItem = reader.readNextItem()) != null) {
 			++cnt;
 			if (cnt % 100000 == 0)
@@ -114,8 +113,7 @@ public class TfIdfGen {
 		
 		Item idItem = null;
 		Item wcItem = null;
-		ItemReader reader = new ItemReader();
-		reader.open(wikiArticleWordCntFileName, false);
+		ItemReader reader = new ItemReader(wikiArticleWordCntFileName, false);
 		int cnt = 0;
 		int preWid = -1, wid = -1;
 		boolean endLoop = false;
@@ -301,8 +299,7 @@ public class TfIdfGen {
 			String dstFileName) {
 		WikiReaderStripped wrs = new WikiReaderStripped();
 		wrs.open(wikiTextFileName, false, true);
-		ItemWriter writer = new ItemWriter();
-		writer.open(dstFileName);
+		ItemWriter writer = new ItemWriter(dstFileName, true);
 
 		int cnt = 0;
 		Item wcItem = new Item(); // tmp
@@ -346,8 +343,7 @@ public class TfIdfGen {
 
 	private static void genAllWordsTmpFile(String wikiArticleWordCntFileName,
 			String allWordsTmpFilePath) {
-		ItemReader reader = new ItemReader();
-		reader.open(wikiArticleWordCntFileName, false);
+		ItemReader reader = new ItemReader(wikiArticleWordCntFileName, false);
 
 		BufferedWriter writer = IOUtils.getUTF8BufWriter(
 				allWordsTmpFilePath, false);
@@ -478,8 +474,7 @@ public class TfIdfGen {
 	
 	private static int getTermDocCnts(String wikiArticleWordCntFileName, String[] words, int[] cnts) {
 		Item wcItem = null;
-		ItemReader reader = new ItemReader();
-		reader.open(wikiArticleWordCntFileName, false);
+		ItemReader reader = new ItemReader(wikiArticleWordCntFileName, false);
 		int cnt = 0;
 		while (reader.readNextItem() != null) {
 			reader.readNextItem();

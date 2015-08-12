@@ -34,6 +34,13 @@ public class FreebaseMain {
 		FreebaseTools.genPersonLastNameList(nameListFileName, personListFileName, dstFileName);
 	}
 	
+	private static void genNotableFor(IniFile config) {
+		IniFile.Section sect = config.getSection("freebase_gen_notable_for");
+		String dumpFileName = sect.getValue("dump_file"),
+				dstFileName = sect.getValue("dst_file");
+		FreebaseTools.genNotableForAttributes(dumpFileName, dstFileName);
+	}
+	
 	public static void run(IniFile config) {
 		String job = config.getValue("main", "job");
 		if (job.equals("freebase_search"))
@@ -44,5 +51,7 @@ public class FreebaseMain {
 			genPersonLastNameList(config);
 		else if (job.equals("freebase_filter_person_last_name"))
 			filterPersonLastName(config);
+		else if (job.equals("freebase_gen_notable_for"))
+			genNotableFor(config);
 	}
 }

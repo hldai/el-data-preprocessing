@@ -2,6 +2,7 @@
 
 package dcd.el.dict;
 
+import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.DataOutputStream;
@@ -17,6 +18,7 @@ import dcd.el.io.IOUtils;
 import dcd.el.objects.ByteArrayString;
 import dcd.el.utils.CommonUtils;
 import dcd.el.utils.TupleFileTools;
+import dcd.el.utils.WidToMidMapper;
 
 public class DictGen {
 	private static class MidToAliasCntMapper {
@@ -48,6 +50,105 @@ public class DictGen {
 		
 		private String[] mids;
 		private int[] cnts;
+	}
+	
+	private static class AliasCandidateEntry implements Comparable<AliasCandidateEntry> {
+		public ByteArrayString alias = null;
+//		public int pos = 0;
+		public LinkedList<Integer> wids = null;
+		
+		@Override
+		public int compareTo(AliasCandidateEntry er) {
+			return this.alias.compareTo(er.alias);
+		}
+	}
+	
+	public static void genSimpleWikiDict(String midEachAliasCntFileName, String midToWidFileName,
+			String dstAliasListFileName, String dstCandidatesFileName) {
+		WidToMidMapper mapper = new WidToMidMapper(midToWidFileName);
+//		System.out.println(mapper.getWid("05bl_7"));
+		
+		BufferedReader reader = IOUtils.getUTF8BufReader(midEachAliasCntFileName);
+		LinkedList<AliasCandidateEntry> entries = new LinkedList<AliasCandidateEntry>();
+		try {
+			long lineCnt = 0;
+			String line = null;
+//			int candidatesCnt = 0;
+			String curAlias = null;
+			AliasCandidateEntry curEntry = null;
+			while ((line = reader.readLine()) != null) {
+				String alias = CommonUtils.getFieldFromLine(line, 1);
+				ByteArrayString basAlias = new ByteArrayString(alias);
+				if (alias.length() > 100 || basAlias.bytes.length > 127) {
+					continue;
+				}
+				String mid = CommonUtils.getFieldFromLine(line, 0);
+				
+				int wid = mapper.getWid(mid);
+				if (wid > 0) {
+					if (curAlias == null || !alias.equals(curAlias)) {
+						if (curEntry != null) {
+							entries.add(curEntry);
+						}
+						
+						curAlias = alias;
+						curEntry = new AliasCandidateEntry();
+						curEntry.alias = basAlias;
+//						curEntry.pos = entries.size();
+						curEntry.wids = new LinkedList<Integer>();
+						curEntry.wids.add(wid);
+//						curEntry.len = 1;
+					} else {
+//						++curEntry.len;
+						curEntry.wids.add(wid);
+					}
+					
+//					++candidatesCnt;
+//					dos.writeInt(wid);
+				}
+				
+				++lineCnt;
+				if (lineCnt % 1000000 == 0)
+					System.out.println(lineCnt);
+//				if (lineCnt == 10000)
+//					break;
+			}
+			entries.add(curEntry);
+			reader.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		Collections.sort(entries);
+		
+		DataOutputStream dos = IOUtils.getBufferedDataOutputStream(dstCandidatesFileName);
+		try {
+			for (AliasCandidateEntry entry : entries) {
+				for (Integer wid : entry.wids) {
+					dos.writeInt(wid);
+				}
+			}
+			
+			dos.close();
+		} catch (IOException e1) {
+			e1.printStackTrace();
+		}
+		
+		dos = IOUtils.getBufferedDataOutputStream(dstAliasListFileName);
+		try {
+			dos.writeInt(entries.size());
+			int index = 0;
+			for (AliasCandidateEntry entry : entries) {
+				entry.alias.toFileWithByteLen(dos);
+				dos.writeInt(index++);
+				dos.writeInt(entry.wids.size());
+//				dos.writeInt(entry.pos);
+//				dos.writeInt(entry.len);
+			}
+			dos.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 	// TODO uncomment
@@ -379,28 +480,5 @@ public class DictGen {
 
 		System.out.println("Max mid length: " + maxLen);
 		return maxLen;
-	}
-
-	// remove duplicate rows in ordered file fileName.
-	@Deprecated
-	public static void removeDuplicates(String srcFileName, String dstFileName) {
-		BufferedReader reader = IOUtils.getUTF8BufReader(srcFileName);
-		BufferedWriter writer = IOUtils.getUTF8BufWriter(dstFileName);
-
-		try {
-			String line = null, preLine = null;
-			while ((line = reader.readLine()) != null) {
-				if (preLine == null || !line.equals(preLine)) {
-					writer.write(line + "\n");
-				}
-
-				preLine = line;
-			}
-
-			reader.close();
-			writer.close();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
 	}
 }

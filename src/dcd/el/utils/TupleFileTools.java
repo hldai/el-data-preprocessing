@@ -119,6 +119,11 @@ public class TupleFileTools {
 	}
 	
 	public static void join(String fileName0, String fileName1,
+			int idxCmp0, int idxCmp1, String dstFileName) {
+		join(fileName0, fileName1, idxCmp0, idxCmp1, dstFileName, null);
+	}
+	
+	public static void join(String fileName0, String fileName1,
 			int idxCmp0, int idxCmp1, String dstFileName, Comparator<String> fieldComparator) {
 		BufferedReader reader0 = IOUtils.getUTF8BufReader(fileName0), reader1 = IOUtils
 				.getUTF8BufReader(fileName1);

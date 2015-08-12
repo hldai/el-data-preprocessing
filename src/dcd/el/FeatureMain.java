@@ -6,6 +6,7 @@ import dcd.config.IniFile;
 import dcd.el.feature.FeatureTools;
 import dcd.el.feature.PopularityGen;
 import dcd.el.feature.TfIdfGen;
+import dcd.el.tools.VecRepresentationTools;
 
 public class FeatureMain {
 	public static void genFullWordCountList(IniFile config) {
@@ -94,7 +95,7 @@ public class FeatureMain {
 				tfidfFeatFileName, dstFeatFileName, dstIdxFileName);
 	}
 
-	public static void mapMidToFeatIndex(IniFile config) {
+	private static void mapMidToFeatIndex(IniFile config) {
 		IniFile.Section sect = config.getSection("feat_map_mid_to_feat_idx");
 		if (sect == null)
 			return;
@@ -108,20 +109,39 @@ public class FeatureMain {
 	}
 
 	// number of aliases of entities
-	public static void genNumAliasesFile(IniFile config) {
+	private static void genNumAliasesFile(IniFile config) {
 		IniFile.Section sect = config.getSection("feat_gen_num_aliases");
 		String aliasListFileName = sect.getValue("alias_list_file"), dstFileName = sect
 				.getValue("dst_file");
 		FeatureTools.genEnityNumAliasesFile(aliasListFileName, dstFileName);
 	}
 
-	public static void genPopularityLink(IniFile config) {
+	private static void genPopularityLink(IniFile config) {
 		IniFile.Section sect = config.getSection("feat_gen_popularity_link");
 		String anchorCntFileName = sect.getValue("anchor_cnt_file"), maxRefCntFileName = sect
 				.getValue("max_ref_cnt_file"), dstFileName = sect
 				.getValue("dst_file");
 		FeatureTools.genPopularityLink(anchorCntFileName, maxRefCntFileName,
 				dstFileName);
+	}
+	
+	private static void genMidName(IniFile config) {
+		IniFile.Section sect = config.getSection("feat_gen_mid_name");
+		String midNameFileName = sect.getValue("mid_name_file"), 
+				midToWidFileName = sect.getValue("mid_wid_file"),
+				widTitleFileName = sect.getValue("wid_title_file"),
+				dstMidNameForVecRepFileName = sect.getValue("dst_mid_name_file"),
+				dstMidNameForVecRepWikiOnlyFileName = sect.getValue("dst_mid_name_wiki_only_file");
+		VecRepresentationTools.genMidNameForVecRepresentation(midNameFileName, midToWidFileName, widTitleFileName,
+				dstMidNameForVecRepFileName, dstMidNameForVecRepWikiOnlyFileName);
+	}
+	
+	private static void filterTrainingData(IniFile config) {
+		IniFile.Section sect = config.getSection("feat_filter_training_data");
+		String wikiTrainingDataFileName = sect.getValue("training_data_file"),
+				widNotableForFileName = sect.getValue("wid_notable_for_file"),
+				dstFileName = sect.getValue("dst_file");
+		VecRepresentationTools.filterTrainingData(wikiTrainingDataFileName, widNotableForFileName, dstFileName);
 	}
 
 	public static void run(IniFile config) {
@@ -140,14 +160,17 @@ public class FeatureMain {
 			filterFullWordCnt(config);
 		} else if (job.equals("feat_gen_idf")) {
 			genIdf(config);
-		} else if (job.equals("feat_merge_pop_tfidf")) {
+		} else if (job.equals("feat_merge_pop_tfidf"))
 			mergePopTfIdfFeatures(config);
-		} else if (job.equals("feat_map_mid_to_feat_idx")) {
+		else if (job.equals("feat_map_mid_to_feat_idx"))
 			mapMidToFeatIndex(config);
-		} else if (job.equals("feat_gen_num_aliases")) {
+		else if (job.equals("feat_gen_num_aliases"))
 			genNumAliasesFile(config);
-		} else if (job.equals("feat_gen_popularity_link")) {
+		else if (job.equals("feat_gen_popularity_link"))
 			genPopularityLink(config);
-		}
+		else if (job.equals("feat_gen_mid_name"))
+			genMidName(config);
+		else if (job.equals("feat_filter_training_data"))
+			filterTrainingData(config);
 	}
 }

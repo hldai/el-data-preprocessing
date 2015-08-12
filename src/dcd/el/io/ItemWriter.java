@@ -6,6 +6,10 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 
 public class ItemWriter {
+	public ItemWriter(String fileName, boolean checkExistence) {
+		writer = IOUtils.getUTF8BufWriter(fileName, checkExistence);
+	}
+	
 	public void open(String fileName) {
 		writer = IOUtils.getUTF8BufWriter(fileName);
 	}

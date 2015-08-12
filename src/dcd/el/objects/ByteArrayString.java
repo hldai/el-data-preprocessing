@@ -77,13 +77,31 @@ public class ByteArrayString implements Comparable<ByteArrayString> {
 		}
 	}
 
+	// TODO encoding
 	public String toString() {
-		return new String(bytes);
+		try {
+			return new String(bytes, "UTF8");
+		} catch (UnsupportedEncodingException e) {
+			e.printStackTrace();
+		}
+		return null;
 	}
 
 	public void toFileWithByteLen(DataOutputStream dos) {
 		try {
+			if (bytes.length > 127) {
+				System.err.println("Length larger than 127!");
+			}
 			dos.write(bytes.length);
+			dos.write(bytes);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public void toFileWithShortByteLen(DataOutputStream dos) {
+		try {
+			dos.writeShort(bytes.length);
 			dos.write(bytes);
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -105,6 +123,16 @@ public class ByteArrayString implements Comparable<ByteArrayString> {
 	public void fromFileWithByteLen(DataInputStream dis) {
 		try {
 			byte len = dis.readByte();
+			bytes = new byte[len];
+			dis.read(bytes);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public void fromFileWithShortByteLen(DataInputStream dis) {
+		try {
+			short len = dis.readShort();
 			bytes = new byte[len];
 			dis.read(bytes);
 		} catch (IOException e) {

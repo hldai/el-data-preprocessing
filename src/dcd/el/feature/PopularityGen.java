@@ -12,8 +12,7 @@ import dcd.el.io.ItemReader;
 public class PopularityGen {
 	public static void genPopularityFile(String wikiArticleWordCntFileName, String maxWordCountFileName,
 			String dstFileName) {
-		ItemReader reader = new ItemReader();
-		reader.open(wikiArticleWordCntFileName, false);
+		ItemReader reader = new ItemReader(wikiArticleWordCntFileName, false);
 		
 		DataOutputStream dos = IOUtils.getBufferedDataOutputStream(dstFileName);
 		

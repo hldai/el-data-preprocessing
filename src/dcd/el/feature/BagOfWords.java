@@ -8,6 +8,8 @@ import java.util.TreeMap;
 import edu.stanford.nlp.ling.Word;
 import edu.stanford.nlp.process.PTBTokenizer;
 
+// use TokenizeUtils instead
+@Deprecated
 public class BagOfWords {
 	public static TreeMap<String, Integer> toBagOfWords(String text) {
 		TreeMap<String, Integer> m = new TreeMap<String, Integer>();

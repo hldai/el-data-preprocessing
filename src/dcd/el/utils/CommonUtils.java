@@ -2,7 +2,13 @@
 
 package dcd.el.utils;
 
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.Comparator;
+import java.util.HashSet;
+import java.util.Random;
+
+import org.apache.commons.lang3.StringEscapeUtils;
 
 public class CommonUtils {
 	public static class StringToIntComparator implements Comparator<String> {
@@ -12,6 +18,58 @@ public class CommonUtils {
 			int vl = Integer.valueOf(sl), vr = Integer.valueOf(sr);
 			return vl - vr;
 		}
+	}
+	
+	public static int[] genNonRepeatingRandom(int max, int num) {
+		if (num > max)
+			return null;
+		
+		int[] vals = new int[num];
+		
+		Random rnd = new Random();
+		HashSet<Integer> generated = new HashSet<Integer>();
+		int cnt = 0;
+		while (cnt < num) {
+			int val = rnd.nextInt(max);
+			if (generated.add(val)) {
+				vals[cnt] = val;
+				++cnt;
+			}
+		}
+		
+		return vals;
+	}
+	
+	public static long getLittleEndianLong(byte[] bytes) {
+		ByteBuffer buf = ByteBuffer.wrap(bytes);
+		buf.order(ByteOrder.LITTLE_ENDIAN);
+		return buf.asLongBuffer().get();
+	}
+	
+	public static int getLittleEndianInt(byte[] bytes) {
+		ByteBuffer buf = ByteBuffer.wrap(bytes);
+		buf.order(ByteOrder.LITTLE_ENDIAN);
+		return buf.asIntBuffer().get();
+	}
+	
+	public static float[] getLittleEndianFloatArray(byte[] bytes) {
+		float[] vals = new float[bytes.length / Float.BYTES];
+		
+		ByteBuffer buf = ByteBuffer.wrap(bytes);
+		buf.order(ByteOrder.LITTLE_ENDIAN);
+		buf.asFloatBuffer().get(vals);
+		
+		return vals;
+	}
+	
+	public static String unescapeHtml(String str) {
+		str = str.replaceAll("&nbsp;", " ");
+		return StringEscapeUtils.unescapeHtml4(str);
+	}
+	
+	public static String handleWiki(String str) {
+		String s = null;
+		return s;
 	}
 	
 	// a line: 

@@ -8,7 +8,7 @@ public class ELConsts {
 	
 	public static int MID_WITH_PSE_BYTE_LEN = MID_BYTE_LEN + Float.BYTES;
 	
-	public static String TMP_FILE_PATH = "d:/data/tmp_files";
+	public static String TMP_FILE_PATH = "e:/el/tmp_files";
 	
 	public static String NUM_LINES_FILE_SUFFIX = "_nl";
 	

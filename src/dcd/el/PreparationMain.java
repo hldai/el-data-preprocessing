@@ -2,8 +2,6 @@
 
 package dcd.el;
 
-import java.util.HashMap;
-
 import dcd.config.IniFile;
 import dcd.el.tac.MidToEidMapper;
 import dcd.el.tools.MiscTools;
@@ -13,8 +11,6 @@ public class PreparationMain {
 	public static final String FREEBASE_PATH = "d:/data/el/LDC2015E42/data";
 
 	public static final String SEARCH_FILE = "d:/data/el/freebase-rdf-2015-01-25-00-00.gz";
-	// public static final String SEARCH_FILE =
-	// "d:/data/el/LDC2015E42/data/webpages-m-00010.nt.gz";
 	public static final String SEARCH_SMID = "m.0_hcwg_";
 	public static final String SEARCH_RESULT_FILE = "d:/data/el/search_results.txt";
 	public static final String SEARCH_FILE_NAME_FILETER = "webpages";
@@ -106,8 +102,8 @@ public class PreparationMain {
 		}
 	}
 		
-	public static void runWithIni() {
-		IniFile iniFile = new IniFile("d:/data/el/config/java_tools.ini");
+	public static void runWithIni(String configFileName) {
+		IniFile iniFile = new IniFile(configFileName);
 		String job = iniFile.getValue("main", "job");
 		
 		System.out.println("Job: " + job);
@@ -122,6 +118,8 @@ public class PreparationMain {
 			FeatureMain.run(iniFile);
 		else if (job.startsWith("freebase"))
 			FreebaseMain.run(iniFile);
+		else if (job.startsWith("vecrep"))
+			VecRepresentationMain.run(iniFile);
 		else if (job.equals("test"))
 			test();
 	}
@@ -142,7 +140,11 @@ public class PreparationMain {
 		// processFreebaseEnNames();
 //		checkWikiPopFileOrder();
 
-		runWithIni();
+		if (args.length == 0) {
+			System.out.println("need config file.");
+		} else {
+			runWithIni(args[0]);
+		}
 
 
 		long endTime = System.currentTimeMillis();

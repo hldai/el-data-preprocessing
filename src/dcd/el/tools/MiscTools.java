@@ -847,8 +847,7 @@ public class MiscTools {
 	}
 	
 	public static void searchItem(String fileName, String str) {
-		ItemReader reader = new ItemReader();
-		reader.open(fileName, false);
+		ItemReader reader = new ItemReader(fileName, false);
 		
 		Item item = null, preItem = null;
 		while ((item = reader.readNextItem()) != null) {

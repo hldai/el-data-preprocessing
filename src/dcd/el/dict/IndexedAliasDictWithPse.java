@@ -1,3 +1,5 @@
+// author: DHL brnpoem@gmail.com
+
 package dcd.el.dict;
 
 import java.io.BufferedReader;
@@ -6,6 +8,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.RandomAccessFile;
 import java.util.Arrays;
+import java.util.LinkedList;
 
 import dcd.el.ELConsts;
 import dcd.el.io.IOUtils;
@@ -13,9 +16,9 @@ import dcd.el.objects.ByteArrayString;
 import dcd.el.utils.CommonUtils;
 
 public class IndexedAliasDictWithPse {
-	public static class MidPse {
-		public ByteArrayString mid = null;
-		public float pse = 0;
+	public static class MidPseList {
+		public LinkedList<ByteArrayString> mids = null;
+		public LinkedList<Float> pses = null;
 	}
 	
 	public class MidBlock {
@@ -54,7 +57,7 @@ public class IndexedAliasDictWithPse {
 		}
 	}
 	
-	public MidPse[] getMidPses(String alias) {
+	public MidPseList getMidPses(String alias) {
 		long curTime = System.currentTimeMillis();
 		
 		alias = alias.toLowerCase();
@@ -83,7 +86,7 @@ public class IndexedAliasDictWithPse {
 			return null;
 		}
 		
-		MidPse[] results = getMidPsesFromMidPseFile(mb.begPos, mb.len);
+		MidPseList results = getMidPsesFromMidPseFile(mb.begPos, mb.len);
 		retTime += System.currentTimeMillis() - curTime;
 		return results;
 	}
@@ -124,22 +127,25 @@ public class IndexedAliasDictWithPse {
 		return null;
 	}
 	
-	private MidPse[] getMidPsesFromMidPseFile(int begPos, int len) {
-		MidPse[] midPses = new MidPse[len];
+	private MidPseList getMidPsesFromMidPseFile(int begPos, int len) {
+		MidPseList midPseList = new MidPseList();
+		midPseList.mids = new LinkedList<ByteArrayString>();
+		midPseList.pses = new LinkedList<Float>();
 		try {
 			midRaf.seek(begPos * ELConsts.MID_WITH_PSE_BYTE_LEN);
 			for (int i = 0; i < len; ++i) {
-				MidPse midPse = new MidPse();
-				midPse.mid = new ByteArrayString();
-				midPse.mid.fromFileWithFixedLen(midRaf, ELConsts.MID_BYTE_LEN);
-				midPse.pse = midRaf.readFloat();
-				midPses[i] = midPse;
+				ByteArrayString mid = new ByteArrayString();
+				mid.fromFileWithFixedLen(midRaf, ELConsts.MID_BYTE_LEN);
+				float pse = midRaf.readFloat();
+				
+				midPseList.mids.add(mid);
+				midPseList.pses.add(pse);
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 		
-		return midPses;
+		return midPseList;
 	}
 	
 	private void loadAliasIndexFile(String aliasIndexFileName, int numIndices) {

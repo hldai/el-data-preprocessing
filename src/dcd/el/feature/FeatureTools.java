@@ -15,6 +15,7 @@ import dcd.el.ELConsts;
 import dcd.el.documents.NewsDocument;
 import dcd.el.io.IOUtils;
 import dcd.el.objects.ByteArrayString;
+import dcd.el.utils.CommonUtils;
 import dcd.el.utils.TupleFileTools;
 
 public class FeatureTools {
@@ -27,7 +28,7 @@ public class FeatureTools {
 		public ByteArrayString mid = null;
 		public long filePointer = 0;
 	}
-	
+
 	public static void test() {		
 //		String idfFileName = "d:/data/el/features/enwiki_idf.txt";
 		String idfFileName = "d:/data/el/features/enwiki_idf.sd";

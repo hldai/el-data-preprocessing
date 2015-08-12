@@ -32,6 +32,13 @@ public class WidToMidMapper {
 		return mids[pos];
 	}
 	
+	public int getWid(String mid) {
+		int pos = Arrays.binarySearch(mids, mid);
+		if (pos < 0)
+			return -1;
+		return wids[pos];
+	}
+	
 	int[] wids;
 	String[] mids;
 }
