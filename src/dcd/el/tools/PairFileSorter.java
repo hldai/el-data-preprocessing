@@ -10,8 +10,8 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedList;
 
-import dcd.el.ELConsts;
-import dcd.el.io.IOUtils;
+import edu.zju.dcd.edl.ELConsts;
+import edu.zju.dcd.edl.io.IOUtils;
 import dcd.el.objects.Pair;
 import dcd.el.utils.CommonUtils;
 

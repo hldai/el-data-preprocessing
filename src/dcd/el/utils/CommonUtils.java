@@ -10,7 +10,30 @@ import java.util.Random;
 
 import org.apache.commons.lang3.StringEscapeUtils;
 
-public class CommonUtils {
+public class CommonUtils {	
+	// TODO more accurate
+	public static boolean hasWord(String text, String word) {
+		int fromIdx = 0, wordLen = word.length();
+		int idx = 0;
+		while (fromIdx < text.length() && (idx = text.indexOf(word, fromIdx)) >= 0) {
+			if (isWord(text, idx, idx + wordLen - 1))
+				return true;
+			fromIdx = idx + 1;
+		}
+		
+		return false;
+	}
+
+	public static boolean isWord(String text, int idxLeft, int idxRight) {
+		boolean leftCool = idxLeft == 0 || charIsBreak(text.charAt(idxLeft - 1));
+		boolean rightCool = idxRight == text.length() - 1 || charIsBreak(text.charAt(idxRight + 1));
+		return leftCool && rightCool;
+	}
+
+	public static boolean charIsBreak(char ch) {
+		return ch > 0 && ch <= 128 && !((ch <= 'z' && ch >= 'a') || (ch <= 'Z' && ch >= 'A'));
+	}
+
 	public static class StringToIntComparator implements Comparator<String> {
 
 		@Override
@@ -18,6 +41,31 @@ public class CommonUtils {
 			int vl = Integer.valueOf(sl), vr = Integer.valueOf(sr);
 			return vl - vr;
 		}
+	}
+	
+	public static boolean hasEnglishChar(String str) {
+		for (int i = 0; i < str.length(); ++i) {
+			if (Character.isAlphabetic(str.charAt(i))) {
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	public static int countWords(String text) {
+		int cnt = 0;
+		int pos = 0;
+		text = text.trim();
+		while (pos < text.length()) {
+			if (Character.isWhitespace(text.charAt(pos))) {
+				while (pos < text.length() 
+						&& Character.isWhitespace(text.charAt(pos)))
+					++pos;
+				++cnt;
+			}
+			++pos;
+		}
+		return cnt;
 	}
 	
 	public static int[] genNonRepeatingRandom(int max, int num) {

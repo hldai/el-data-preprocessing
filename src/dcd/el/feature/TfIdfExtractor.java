@@ -8,8 +8,9 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.TreeMap;
 
-import dcd.el.io.IOUtils;
-import dcd.el.objects.ByteArrayString;
+import edu.zju.dcd.edl.io.IOUtils;
+import edu.zju.dcd.edl.obj.ByteArrayString;
+import dcd.el.utils.TokenizeUtils;
 
 public class TfIdfExtractor {
 	public static class WordCount implements Comparable<WordCount> {
@@ -34,6 +35,9 @@ public class TfIdfExtractor {
 				terms[i] = new ByteArrayString();
 				terms[i].fromFileWithByteLen(dis);
 				idfs[i] = dis.readDouble();
+				if (idfs[i] < 2) {
+					System.out.println(terms[i].toString() + "\t" + idfs[i]);
+				}
 			}
 			
 			dis.close();
@@ -47,7 +51,8 @@ public class TfIdfExtractor {
 		if (text == null)
 			return null;
 		
-		TreeMap<String, Integer> termCntsMap = BagOfWords.toBagOfWords(text);
+//		TreeMap<String, Integer> termCntsMap = BagOfWords.toBagOfWords(text);
+		TreeMap<String, Integer> termCntsMap = TokenizeUtils.toBagOfWords(text);
 
 		int docTermCnt = 0;
 		TfIdfFeature feat = new TfIdfFeature();
@@ -112,6 +117,10 @@ public class TfIdfExtractor {
 	
 	public int getTermIndex(String term) {
 		return Arrays.binarySearch(terms, new ByteArrayString(term));
+	}
+	
+	public ByteArrayString getTerm(int idx) {
+		return terms[idx];
 	}
 	
 	private ByteArrayString[] terms = null;

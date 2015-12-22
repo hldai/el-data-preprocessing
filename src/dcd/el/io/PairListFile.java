@@ -6,6 +6,8 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
 
+import edu.zju.dcd.edl.io.IOUtils;
+
 public class PairListFile {
 	public static class StringIntArray {
 		public String[] keys = null;

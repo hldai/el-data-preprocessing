@@ -8,15 +8,15 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedList;
 
-import dcd.el.ELConsts;
+import edu.zju.dcd.edl.ELConsts;
 import dcd.el.documents.NewsDocument;
-import dcd.el.io.IOUtils;
-import dcd.el.objects.ByteArrayString;
-import dcd.el.utils.CommonUtils;
-import dcd.el.utils.TupleFileTools;
+import edu.zju.dcd.edl.io.IOUtils;
+import edu.zju.dcd.edl.obj.ByteArrayString;
+import edu.zju.dcd.edl.utils.WidMidMapper;
 
 public class FeatureTools {
 	public static class FeaturePos implements Comparable<FeaturePos> {
@@ -27,6 +27,16 @@ public class FeatureTools {
 		
 		public ByteArrayString mid = null;
 		public long filePointer = 0;
+	}
+	
+	private static class MidPopularityEntry implements Comparable<MidPopularityEntry> {
+		@Override
+		public int compareTo(MidPopularityEntry entry) {
+			return mid.compareTo(entry.mid);
+		}
+		
+		public ByteArrayString mid;
+		public float popularity;
 	}
 
 	public static void test() {		
@@ -162,6 +172,89 @@ public class FeatureTools {
 			e.printStackTrace();
 		}
 	}
+	
+	public static void genMidPop(String midToWidFileName, String widPopFileName, String dstFileName) {
+		WidMidMapper widToMidMapper = new WidMidMapper(midToWidFileName);
+		DataInputStream dis = IOUtils.getBufferedDataInputStream(widPopFileName);
+		
+		LinkedList<MidPopularityEntry> midPopularityEntries = new LinkedList<MidPopularityEntry>();
+		int widCnt = 0, midCnt = 0;
+		try {
+			while (dis.available() > 0) {
+				++widCnt;
+				int wid = dis.readInt();
+				float popularity = dis.readFloat();
+				String mid = widToMidMapper.getMid(wid);
+				
+				if (mid != null) {
+					++midCnt;
+					MidPopularityEntry entry = new MidPopularityEntry();
+					entry.mid = new ByteArrayString(mid);
+					entry.popularity = popularity;
+					midPopularityEntries.add(entry);
+				}
+			}
+			
+			dis.close();
+			System.out.println(widCnt + "\t" + midCnt);
+			
+			
+			DataOutputStream dos = IOUtils.getBufferedDataOutputStream(dstFileName);
+			Collections.sort(midPopularityEntries);
+			dos.writeInt(midPopularityEntries.size());
+			for (MidPopularityEntry entry : midPopularityEntries) {
+				entry.mid.toFileWithFixedLen(dos, ELConsts.MID_BYTE_LEN);
+				dos.writeFloat(entry.popularity);
+			}
+			dos.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	// can be used for more generized features
+	public static void genTfIdfIndex(String midToWidFileName, String tfIdfFileName, String dstIndexFileName) {
+		int numWids = IOUtils.getNumLinesFor(midToWidFileName);
+		int[] wids = new int[numWids];
+		String[] mids = new String[numWids];
+		loadWidsMids(midToWidFileName, mids, wids);
+
+		DataInputStream disTfidf = IOUtils
+				.getBufferedDataInputStream(tfIdfFileName);
+
+		FeaturePos[] featurePoses = new FeaturePos[wids.length];
+		int featPosCnt = 0;
+		try {
+			TfIdfFeature tfidfFeature = new TfIdfFeature();
+			RandomAccessFile raf = new RandomAccessFile(tfIdfFileName, "r");
+			long curFeatFilePointer = raf.getFilePointer();
+			long fileLen = raf.length();
+			int curFeatWid = -1;
+			for (int i = 0; i < wids.length; ++i) {				
+				while (curFeatWid < wids[i] && raf.getFilePointer() < fileLen) {
+					curFeatFilePointer = raf.getFilePointer();
+					curFeatWid = raf.readInt();
+					tfidfFeature.fromFile(raf);
+				}
+				
+				if (curFeatWid == wids[i]) {
+					featurePoses[featPosCnt] = new FeaturePos();
+					featurePoses[featPosCnt].mid = new ByteArrayString(mids[i], ELConsts.MID_BYTE_LEN);
+					featurePoses[featPosCnt].filePointer = curFeatFilePointer;
+					++featPosCnt;
+				}
+			}
+			
+			disTfidf.close();
+			raf.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		System.out.println(featPosCnt);
+		Arrays.sort(featurePoses, 0, featPosCnt);
+		writeFeatureIndices(featurePoses, featPosCnt, dstIndexFileName);
+	}
 
 	public static void mergePopTfIdfFeatures(String midToWidFileName,
 			String popFeatFileName, String tfidfFeatFileName,
@@ -235,19 +328,20 @@ public class FeatureTools {
 		}
 		
 		Arrays.sort(featurePoses);
-		writeFeatureIndices(featurePoses, dstIdxFileName);
+		writeFeatureIndices(featurePoses, featurePoses.length, dstIdxFileName);
 
 //		TupleFileTools.sort(tmpIdxFileName, dstIdxFileName, new TupleFileTools.SingleFieldComparator(0));
 //		IOUtils.writeNumLinesFileFor(dstIdxFileName, numWids);
 	}
 	
-	private static void writeFeatureIndices(FeaturePos[] featurePoses, String dstFileName) {
+	private static void writeFeatureIndices(FeaturePos[] featurePoses, int featurePosCnt, String dstFileName) {
 		DataOutputStream dos = IOUtils.getBufferedDataOutputStream(dstFileName);
 		try {
-			dos.writeInt(featurePoses.length);
-			for (FeaturePos fp : featurePoses) {
-				fp.mid.toFileWithFixedLen(dos, ELConsts.MID_BYTE_LEN);
-				dos.writeLong(fp.filePointer);
+			System.out.println(featurePosCnt);
+			dos.writeInt(featurePosCnt);
+			for (int i = 0; i < featurePosCnt; ++i) {
+				featurePoses[i].mid.toFileWithFixedLen(dos, ELConsts.MID_BYTE_LEN);
+				dos.writeLong(featurePoses[i].filePointer);
 			}
 			
 			dos.close();
@@ -275,24 +369,24 @@ public class FeatureTools {
 		}
 	}
 	
-	private static void loadWidsMids(String midToWidFileName, ByteArrayString[] mids,
-			int[] wids) {
-		BufferedReader reader = IOUtils.getUTF8BufReader(midToWidFileName);
-		try {
-			String line = null;
-			for (int i = 0; i < mids.length; ++i) {
-				line = reader.readLine();
-				String[] vals = line.split("\t");
-				mids[i] = new ByteArrayString(vals[0], ELConsts.MID_BYTE_LEN);
-				wids[i] = Integer.valueOf(vals[1]);
-			}
-
-			reader.close();
-		} catch (IOException e) {
-			e.printStackTrace();
-			return;
-		}
-	}
+//	private static void loadWidsMids(String midToWidFileName, ByteArrayString[] mids,
+//			int[] wids) {
+//		BufferedReader reader = IOUtils.getUTF8BufReader(midToWidFileName);
+//		try {
+//			String line = null;
+//			for (int i = 0; i < mids.length; ++i) {
+//				line = reader.readLine();
+//				String[] vals = line.split("\t");
+//				mids[i] = new ByteArrayString(vals[0], ELConsts.MID_BYTE_LEN);
+//				wids[i] = Integer.valueOf(vals[1]);
+//			}
+//
+//			reader.close();
+//		} catch (IOException e) {
+//			e.printStackTrace();
+//			return;
+//		}
+//	}
 
 	private static int writeFeatureOfWid(int expectedWid, DataInputStream dis,
 			int curFeatWid, Feature feat, RandomAccessFile dstFile) {

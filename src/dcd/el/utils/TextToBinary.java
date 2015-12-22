@@ -7,8 +7,8 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.Arrays;
 
-import dcd.el.io.IOUtils;
-import dcd.el.objects.ByteArrayString;
+import edu.zju.dcd.edl.io.IOUtils;
+import edu.zju.dcd.edl.obj.ByteArrayString;
 
 public class TextToBinary {
 	public static class BinaryStringPair implements

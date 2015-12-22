@@ -13,13 +13,14 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.TreeMap;
 
-import dcd.el.ELConsts;
-import dcd.el.io.IOUtils;
+import edu.zju.dcd.edl.ELConsts;
+import edu.zju.dcd.edl.io.IOUtils;
 import dcd.el.io.Item;
 import dcd.el.io.ItemReader;
 import dcd.el.io.ItemWriter;
 import dcd.el.io.PairListFile;
 import dcd.el.io.PairListFile.StringDoubleArray;
+import dcd.el.utils.TokenizeUtils;
 import dcd.el.utils.TupleFileTools;
 import dcd.el.wiki.WikiReaderStripped;
 
@@ -307,7 +308,8 @@ public class TfIdfGen {
 		while (wrs.nextPage()) {
 			// System.out.println(wrs.getTitle());
 
-			TreeMap<String, Integer> m = BagOfWords.toBagOfWords(wrs.getText());
+//			TreeMap<String, Integer> m = BagOfWords.toBagOfWords(wrs.getText());
+			TreeMap<String, Integer> m = TokenizeUtils.toBagOfWords(wrs.getText());
 
 			wcItem.numLines = 0;
 			StringBuilder wcList = new StringBuilder();

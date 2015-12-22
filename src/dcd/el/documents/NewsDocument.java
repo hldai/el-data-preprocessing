@@ -5,7 +5,7 @@ package dcd.el.documents;
 import java.io.BufferedReader;
 import java.io.IOException;
 
-import dcd.el.io.IOUtils;
+import edu.zju.dcd.edl.io.IOUtils;
 
 public class NewsDocument {
 	public void load(String fileName) {

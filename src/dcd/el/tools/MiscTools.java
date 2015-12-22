@@ -10,13 +10,13 @@ import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.LinkedList;
 
-import dcd.el.io.IOUtils;
+import edu.zju.dcd.edl.io.IOUtils;
+import edu.zju.dcd.edl.utils.WidMidMapper;
 import dcd.el.io.Item;
 import dcd.el.io.ItemReader;
 import dcd.el.utils.CommonUtils;
 import dcd.el.utils.StringTransformer;
 import dcd.el.utils.TupleFileTools;
-import dcd.el.utils.WidToMidMapper;
 
 public class MiscTools {
 	public static final String TOPIC_PREFIX = "<http://rdf.basekb.com/ns/m.";
@@ -39,7 +39,7 @@ public class MiscTools {
 	public static final int MAX_NUM_WIKI_ID = 15500000;
 	
 	private static class WidToMidTransformer implements StringTransformer {
-		public WidToMidTransformer(int idx, WidToMidMapper widToMid) {
+		public WidToMidTransformer(int idx, WidMidMapper widToMid) {
 			this.idx = idx;
 			this.widToMid = widToMid;
 		}
@@ -66,12 +66,12 @@ public class MiscTools {
 		}
 		
 		int idx;
-		WidToMidMapper widToMid = null;
+		WidMidMapper widToMid = null;
 	}
 	
 	public static void widToMidInTupleFile(String fileName, 
 			String widToMidFileName, String dstFileName) {
-		WidToMidMapper widToMid = new WidToMidMapper(widToMidFileName);
+		WidMidMapper widToMid = new WidMidMapper(widToMidFileName);
 		WidToMidTransformer transformer = new WidToMidTransformer(0, widToMid);
 		TupleFileTools.transformLines(fileName, transformer, dstFileName);
 	}

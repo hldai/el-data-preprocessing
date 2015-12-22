@@ -9,8 +9,8 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedList;
 
-import dcd.el.ELConsts;
-import dcd.el.io.IOUtils;
+import edu.zju.dcd.edl.ELConsts;
+import edu.zju.dcd.edl.io.IOUtils;
 
 public class TupleFileTools {
 	public static final int NUM_CHARS_LIM = 1024 * 1024 * 256;

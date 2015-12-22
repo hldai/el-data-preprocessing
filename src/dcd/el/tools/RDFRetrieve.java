@@ -8,7 +8,7 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.util.LinkedList;
 
-import dcd.el.io.IOUtils;
+import edu.zju.dcd.edl.io.IOUtils;
 
 public class RDFRetrieve {
 	

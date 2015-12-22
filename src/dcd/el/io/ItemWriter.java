@@ -5,6 +5,8 @@ package dcd.el.io;
 import java.io.BufferedWriter;
 import java.io.IOException;
 
+import edu.zju.dcd.edl.io.IOUtils;
+
 public class ItemWriter {
 	public ItemWriter(String fileName, boolean checkExistence) {
 		writer = IOUtils.getUTF8BufWriter(fileName, checkExistence);

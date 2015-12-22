@@ -9,9 +9,9 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.LinkedList;
 
-import dcd.el.ELConsts;
-import dcd.el.io.IOUtils;
-import dcd.el.objects.ByteArrayString;
+import edu.zju.dcd.edl.ELConsts;
+import edu.zju.dcd.edl.io.IOUtils;
+import edu.zju.dcd.edl.obj.ByteArrayString;
 
 public class FeatureLoader {
 	private class FeaturePackSortEntry {

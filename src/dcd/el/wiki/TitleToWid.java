@@ -4,8 +4,8 @@ import java.io.DataInputStream;
 import java.io.IOException;
 import java.util.Arrays;
 
-import dcd.el.io.IOUtils;
-import dcd.el.objects.ByteArrayString;
+import edu.zju.dcd.edl.io.IOUtils;
+import edu.zju.dcd.edl.obj.ByteArrayString;
 
 public class TitleToWid {
 	public TitleToWid(String titleToWidFileName) {
@@ -18,7 +18,7 @@ public class TitleToWid {
 			wids = new int[cnt];
 			for (int i = 0; i < cnt; ++i) {
 				titles[i] = new ByteArrayString();
-				titles[i].fromFileWithShortByteLen(dis);
+				titles[i].fromFileWithShortLen(dis);
 				wids[i] = dis.readInt();
 			}
 			

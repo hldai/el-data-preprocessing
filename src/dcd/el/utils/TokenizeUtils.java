@@ -5,17 +5,50 @@ import java.util.LinkedList;
 import java.util.TreeMap;
 
 import dcd.el.objects.Span;
-import dcd.word2vec.WordVectorSet;
 import edu.stanford.nlp.ling.CoreLabel;
 import edu.stanford.nlp.ling.Word;
 import edu.stanford.nlp.process.CoreLabelTokenFactory;
 import edu.stanford.nlp.process.PTBTokenizer;
+import edu.zju.dcd.edl.wordvec.WordVectorSet;
 
 public class TokenizeUtils {
 	// sentence with words represented as indices of a word vector set
 	public static class IndexSentenceWithMentions {
 		public int[] wordIndices = null;
 		public Span[] mentionSpans = null;
+	}
+	
+	public static class Words {
+		public String words = null;
+		public int numWords;
+	}
+	
+	public static Words toWords(String text, boolean filterPunctuation) {
+		Words words = new Words();
+
+		StringReader sr = new StringReader(text);
+		PTBTokenizer<CoreLabel> tokenizer = new PTBTokenizer<>(sr,
+	              new CoreLabelTokenFactory(), "ptb3Escaping=false,untokenizable=noneDelete");
+		StringBuilder sb = new StringBuilder();
+		words.numWords = 0;
+		while (tokenizer.hasNext()) {
+			CoreLabel label = tokenizer.next();
+			if (!wordIllegal(label.value())) {
+				if (filterPunctuation && !CommonUtils.hasEnglishChar(label.value())) {
+					continue;
+				}
+				
+				if (words.numWords > 0)
+					sb.append(" ");
+				sb.append(label.value().toLowerCase());
+				++words.numWords;
+			}
+		}
+		sr.close();
+		
+		words.words = new String(sb);
+		
+		return words;
 	}
 	
 	public static IndexSentenceWithMentions indexWords(String text, Span[] mentionSpans,
@@ -61,7 +94,7 @@ public class TokenizeUtils {
 			LinkedList<Integer> wordIndices) {
 		StringReader sr = new StringReader(text);
 		PTBTokenizer<CoreLabel> tokenizer = new PTBTokenizer<>(sr,
-	              new CoreLabelTokenFactory(), "untokenizable=noneDelete");
+	              new CoreLabelTokenFactory(), "ptb3Escaping=false,untokenizable=noneDelete");
 		while (tokenizer.hasNext()) {
 			CoreLabel label = tokenizer.next();
 			int idx = wordVectorSet.getWordIndex(label.toString());
@@ -103,7 +136,7 @@ public class TokenizeUtils {
 		int len = word.length();
 		return len == 0 || len > 25 || word.startsWith("http://")
 				|| word.startsWith("https://") || word.contains("\n")
-				|| word.contains("\t")
+				|| word.contains("\t") || word.contains(" ")
 				|| (word.charAt(0) == '<' && word.charAt(len - 1) == '>');
 	}
 }

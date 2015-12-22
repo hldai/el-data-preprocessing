@@ -14,11 +14,13 @@ import java.util.LinkedList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import dcd.el.ELConsts;
-import dcd.el.objects.ByteArrayString;
+import edu.zju.dcd.edl.ELConsts;
 import dcd.el.utils.CommonUtils;
 import dcd.el.utils.TupleFileTools;
-import dcd.el.io.IOUtils;
+import dcd.el.feature.TfIdfExtractor;
+import dcd.el.feature.TfIdfFeature;
+import edu.zju.dcd.edl.io.IOUtils;
+import edu.zju.dcd.edl.obj.ByteArrayString;
 import dcd.el.io.Item;
 import dcd.el.io.ItemReader;
 import dcd.el.io.ItemWriter;
@@ -64,6 +66,26 @@ public class WikiTools {
 			if (widl != widr)
 				return widl - widr;
 			return valsl[1].compareTo(valsr[1]);
+		}
+	}
+	
+	private static class TfIdfEntry implements Comparable<TfIdfEntry> {
+		public int termIndex;
+		public float tf;
+		public float idf;
+		public float tfIdf;
+		
+		@Override
+		public int compareTo(TfIdfEntry entry) {
+			if (tfIdf < entry.tfIdf) {
+				return 1;
+			}
+			return tfIdf == entry.tfIdf ? 0 : -1;
+			
+//			if (idf > entry.idf) {
+//				return 1;
+//			}
+//			return idf == entry.idf ? 0 : -1;
 		}
 	}
 	
@@ -118,11 +140,185 @@ public class WikiTools {
 	
 	private static final String LINK_PATTERN = "\\[\\[(.*?)\\|(.*?)\\]\\]";
 	private static final Pattern REDIRECT_PAGE_PATTERN = Pattern.compile("<redirect\\s*title=\"(.*?)\"\\s*/>");
+	
+	private static final int MIN_NUM_WORDS_IN_TRAINING_SENTENCE = 10;
+	
 	private static final String TEXT_PAGE_PATTERN = "\\s*<page>.*?" + "<title>(.*?)</title>.*?"
 			+ "<id>(.*?)</id>.*?" + "<revision>\\s*" + "<id>(.*?)</id>.*?"
 			+ "<timestamp>(.*?)</timestamp>.*?"
 			+ "<text\\s*xml:space=\"preserve\">(.*?)</text>.*?"
 			+ "<sha1>(.*?)</sha1>.*?" + "</page>";
+	
+	private static final String EXTRACTED_PAGE_PATTERN = "<doc.*?<page>\\s*"
+			+ "<title>(.*?)</title>.*?"
+			+ "<id>(\\d*?)</id>"
+			+ ".*?<text xml:space=\"preserve\">(.*?)</text>.*?</doc>\\s*";
+	
+	private static final String CATEGORE_LINK_PATTERN = "\\[\\[Category:.*?\\]\\]";
+	private static final String FILE_LINK_PATTERN = "\\[\\[File:.*?\\]\\]";
+	
+	private static StringBuilder nextExtractedPage(BufferedReader reader) throws IOException {
+		String line = null;
+		StringBuilder page = new StringBuilder();
+		boolean hasStarted = false;
+		while ((line = reader.readLine()) != null) {
+			if (line.startsWith("<doc id=")) {
+				hasStarted = true;
+			}
+			
+			if (hasStarted) {
+				page.append(line).append("\n");
+				if (line.equals("</doc>")) {
+					break;
+				}
+			}
+		}
+		
+		return hasStarted ? page : null;
+	}
+	
+	public static void extractKeywordsForEntities(String wikiArticleWordCntFileName, 
+			String idfFileName, String dstFileName) {
+		final float minIdf = 2;
+		TfIdfExtractor tfIdfExtractor = new TfIdfExtractor(idfFileName);
+		
+		BufferedWriter writer = IOUtils.getUTF8BufWriter(dstFileName, false);
+
+		int cnt = 0;
+		Item idItem = null, wcItem = null;
+		ItemReader reader = new ItemReader(wikiArticleWordCntFileName, false);
+		while ((idItem = reader.readNextItem()) != null) {
+			++cnt;
+			if (cnt % 100000 == 0)
+				System.out.println(cnt);
+			
+			reader.readNextItem();
+
+			int wid = Integer.valueOf(idItem.value);
+			
+			wcItem = reader.readNextItem();
+			if (wcItem.numLines == 0) {
+				continue;
+			}
+			
+
+			String[] lines = wcItem.value.split("\n");
+			TfIdfExtractor.WordCount[] wordCounts = new TfIdfExtractor.WordCount[lines.length];
+			int docTermCnt = 0, indexCnt = 0;
+			for (String line : lines) {
+				String[] vals = line.split("\t");
+				int termCnt = Integer.valueOf(vals[1]);
+				docTermCnt += termCnt;
+				
+				int idx = tfIdfExtractor.getTermIndex(vals[0]);
+				if (idx > -1) {
+					TfIdfExtractor.WordCount wc = new TfIdfExtractor.WordCount();
+					wc.count = termCnt;
+					wc.index = idx;
+					wordCounts[indexCnt++] = wc;
+				}
+			}
+			
+			if (indexCnt > 0) {
+//				Arrays.sort(wordCounts, 0, indexCnt);
+				TfIdfFeature feature = tfIdfExtractor.getTfIdf(wordCounts, indexCnt, docTermCnt);
+				TfIdfEntry[] tfIdfEntries = new TfIdfEntry[feature.termIndices.length];
+				for (int i = 0; i < feature.termIndices.length; ++i) {
+					tfIdfEntries[i] = new TfIdfEntry();
+					tfIdfEntries[i].termIndex = feature.termIndices[i];
+					tfIdfEntries[i].tf = feature.tfs[i];
+					tfIdfEntries[i].idf = feature.idfs[i];
+					tfIdfEntries[i].tfIdf = feature.tfs[i] * feature.idfs[i];
+				}
+				
+				Arrays.sort(tfIdfEntries);
+				writeEntityKeyWords(writer, wid, tfIdfEntries, tfIdfExtractor, minIdf);
+//				System.out.println(wid);
+//				for (int i = 0; i < 50 && i < tfIdfEntries.length; ++i) {
+//					if (tfIdfEntries[i].idf < minIdf)
+//						continue;
+//					System.out.println(tfIdfExtractor.getTerm(tfIdfEntries[i].termIndex)
+//							+ "\t" + tfIdfEntries[i].tf + "\t" + tfIdfEntries[i].idf);
+//				}
+			}
+			
+//			if (cnt == 10)
+//				break;
+		}
+		
+		try {
+			writer.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	private static void writeEntityKeyWords(BufferedWriter writer, int wid, TfIdfEntry[] tfIdfEntries,
+			TfIdfExtractor tfIdfExtractor, float minIdf) {
+		try {
+			writer.write(wid + "\n");
+
+			for (int i = 0; i < 50 && i < tfIdfEntries.length; ++i) {
+				if (tfIdfEntries[i].idf < minIdf)
+					continue;
+				if (i != 0)
+					writer.write(" ");
+				writer.write(tfIdfExtractor.getTerm(tfIdfEntries[i].termIndex).toString());
+			}
+			writer.write("\n");
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public static void cleanWikiTextData(String wikiTextFileName, String dstFileName) {
+		BufferedReader reader = IOUtils.getUTF8BufReader(wikiTextFileName);
+		BufferedWriter writer = IOUtils.getUTF8BufWriter(dstFileName, false);
+		
+		StringBuilder page = null;
+		Pattern p = Pattern.compile(EXTRACTED_PAGE_PATTERN, Pattern.DOTALL);
+		long cnt = 0, missMatchCnt = 0;
+		try {
+			while ((page = nextExtractedPage(reader)) != null) {
+				Matcher m = p.matcher(page);
+				if (m.matches()) {
+					String title = m.group(1), id = m.group(2), text = m.group(3).trim();
+					if (title.contains("\n")) {
+						System.out.println("Title has \\n!");
+						break;
+					}
+					if (title.startsWith("Wikipedia:")
+							|| text.startsWith("#REDIRECT")) {
+						continue;
+					}
+					
+					text = text.replaceAll(FILE_LINK_PATTERN, "");
+					text = text.replaceAll(CATEGORE_LINK_PATTERN, "");
+					writer.write(title + "\n");
+					writer.write(id + "\n");
+					int numLines = CommonUtils.countLines(text);
+					writer.write((numLines + 1) + "\n");
+					writer.write(text + "\n");
+				} else {
+					++missMatchCnt;
+				}
+				
+				++cnt;
+//				if (cnt == 100)
+//					break;
+				if (cnt % 100000 == 0)
+					System.out.println(cnt);
+			}
+			
+			reader.close();
+			writer.close();
+
+			System.out.println(cnt + " pages");
+			System.out.println(missMatchCnt + " missed.");
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
 	
 	public static void genTrainingDataFromWiki(String allWikiTextFileName, 
 			String midToWidFileName, String widTitleFileName, String dstFileName) {
@@ -135,29 +331,47 @@ public class WikiTools {
 		BufferedReader reader = IOUtils.getUTF8BufReader(allWikiTextFileName);
 		BufferedWriter writer = IOUtils.getUTF8BufWriter(dstFileName, false);
 		try {
-			int cnt = 0;
-			String docText = null;
-			Pattern pagePattern = Pattern.compile(TEXT_PAGE_PATTERN, Pattern.DOTALL);
-			Pattern linkPattern = Pattern.compile(LINK_PATTERN);
-			while ((docText = nextDoc(reader)) != null) {
-				if (pageIsRedirect(docText))
-					continue;
-//				System.out.println(docText);
-				Matcher matcher = pagePattern.matcher(docText);
-				if (matcher.find()) {
-//					System.out.println(matcher.group(5));
-					String[] lines = matcher.group(5).split("\n");
-					for (String line : lines) {
-						genTrainingDataFromTextWithLinks(line, linkPattern, titleWidEntries, writer);
-					}
+			long cnt = 0;
+			while (reader.readLine() != null) {  // read title
+				reader.readLine();  // read wid
+				int numLines = Integer.valueOf(reader.readLine());
+				String line = null;
+				Pattern linkPattern = Pattern.compile(LINK_PATTERN);
+				for (int i = 0; i < numLines; ++i) {
+					line = reader.readLine();
+					genTrainingDataFromTextWithLinks(line, linkPattern, titleWidEntries, writer);
 				}
 				
 				++cnt;
-//				if (cnt == 2)
+//				if (cnt == 10)
 //					break;
-				if (cnt % 100000 == 0)
+				if (cnt % 10000 == 0)
 					System.out.println(cnt);
 			}
+			
+//			int cnt = 0;
+//			String docText = null;
+//			Pattern pagePattern = Pattern.compile(TEXT_PAGE_PATTERN, Pattern.DOTALL);
+//			Pattern linkPattern = Pattern.compile(LINK_PATTERN);
+//			while ((docText = nextDoc(reader)) != null) {
+//				if (pageIsRedirect(docText))
+//					continue;
+////				System.out.println(docText);
+//				Matcher matcher = pagePattern.matcher(docText);
+//				if (matcher.find()) {
+////					System.out.println(matcher.group(5));
+//					String[] lines = matcher.group(5).split("\n");
+//					for (String line : lines) {
+//						genTrainingDataFromTextWithLinks(line, linkPattern, titleWidEntries, writer);
+//					}
+//				}
+//				
+//				++cnt;
+////				if (cnt == 2)
+////					break;
+//				if (cnt % 100000 == 0)
+//					System.out.println(cnt);
+//			}
 			
 			reader.close();
 			writer.close();
@@ -222,6 +436,10 @@ public class WikiTools {
 	
 	private static void genTrainingDataFromTextWithLinks(String text, Pattern linkPattern, 
 			TitleWidEntry[] titleWidEntries, BufferedWriter writer) {
+		if (CommonUtils.countWords(text) < MIN_NUM_WORDS_IN_TRAINING_SENTENCE) {
+			return;
+		}
+		
 		StringBuilder textBuilder = new StringBuilder();
 		StringBuilder mentions = new StringBuilder();
 		Matcher linkMatcher = linkPattern.matcher(text);
@@ -255,7 +473,12 @@ public class WikiTools {
 		
 		if (mentionCnt > 0) {
 			if (begPos < text.length()) {
-				textBuilder.append(text.substring(begPos, text.length()));
+				textBuilder.append(text.substring(begPos));
+			}
+			
+			String newText = new String(textBuilder);
+			if (CommonUtils.countWords(newText) < MIN_NUM_WORDS_IN_TRAINING_SENTENCE) {
+				return;
 			}
 			
 			try {
@@ -369,7 +592,8 @@ public class WikiTools {
 					} else {
 						int wid = titleToWid.getWid(vals[0]);
 						if (wid > 0) {
-							writer.write(wid + "\t" + vals[1].toLowerCase() + "\t" + vals[2] + "\n");
+//							writer.write(wid + "\t" + vals[1].toLowerCase() + "\t" + vals[2] + "\n");
+							writer.write(wid + "\t" + vals[1] + "\t" + vals[2] + "\n");
 						}
 					}
 				}
@@ -433,7 +657,7 @@ public class WikiTools {
 		try {
 			dos.writeInt(titleWidList.size());
 			for (TitleWidEntry entry : titleWidList) {
-				entry.title.toFileWithShortByteLen(dos);
+				entry.title.toFileWithShortLen(dos);
 				dos.writeInt(entry.wid);
 			}
 			dos.close();
@@ -489,7 +713,7 @@ public class WikiTools {
 		try {
 			dos.writeInt(cnt);
 			for (int i = 0; i < cnt; ++i) {
-				entries[i].title.toFileWithShortByteLen(dos);
+				entries[i].title.toFileWithShortLen(dos);
 				dos.writeInt(entries[i].wid);
 			}
 			

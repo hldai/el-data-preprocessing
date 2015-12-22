@@ -6,7 +6,7 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.util.LinkedList;
 
-import dcd.el.io.IOUtils;
+import edu.zju.dcd.edl.io.IOUtils;
 
 public class Trie {
 	public class Node {

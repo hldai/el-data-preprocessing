@@ -5,7 +5,7 @@ package dcd.el.feature;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
-import dcd.el.io.IOUtils;
+import edu.zju.dcd.edl.io.IOUtils;
 import dcd.el.io.Item;
 import dcd.el.io.ItemReader;
 

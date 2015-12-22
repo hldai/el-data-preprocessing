@@ -5,6 +5,7 @@ package dcd.el.io;
 import java.io.BufferedReader;
 import java.io.IOException;
 
+import edu.zju.dcd.edl.io.IOUtils;
 
 public class ItemReader {
 	public ItemReader(String fileName, boolean isGZip) {
